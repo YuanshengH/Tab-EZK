@@ -1,0 +1,41 @@
+# 忽略权重文件
+*.ckpt
+*.pt
+*.pth
+*.joblib
+
+# 忽略数据集和压缩包
+*.tar.gz
+*.csv
+*.tsv
+*.zip
+data/
+temp/
+ablation_experiment/
+baseline/
+case_study/
+ckpt/
+data/
+early_code/
+log/
+logs/
+log_file/
+fig/
+figure/
+output/
+results/
+server/
+slurm_script/
+wandb/
+model_structure/early_code/
+model_structure/gnn_module/
+model_structure/s3f_module/
+train_tabular_multitask.py
+test_tabular_multitask.py
+
+# 忽略日志和缓存
+*.log
+LOG_PATH/
+__pycache__/
+.ipynb_checkpoints/
+.vscode/
