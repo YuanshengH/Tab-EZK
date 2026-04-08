@@ -816,11 +816,7 @@ class GearNet_Ablation_MultiTask(nn.Module):
                     dropout=args.dropout,
                 )
 
-        self.loss_type = args.loss_type
-        if self.loss_type == 'MSE':
-            args.out_dim = 1
-        else:
-            args.out_dim = 4
+        args.out_dim = 4
             
         self.out_kcat = nn.Linear(args.bridge_dim, args.out_dim)
         self.out_km   = nn.Linear(args.bridge_dim, args.out_dim)
