@@ -42,13 +42,13 @@ def main(args):
     same_seed(args.seed)
     device = torch.device('cuda')
 
-    df = pd.read_csv(f'./data/test_split/tabular/merge/df_merge_tabular.csv')
+    df = pd.read_csv(f'data/df_merge_tabular.csv')
     df = df.replace('-', np.nan)
 
     train_df, _ = train_test_split(df, train_size=0.8, random_state=args.seed)
-    test_kcat_df = pd.read_csv(f'./data/test_split/tabular/merge/seed/{args.seed}/test_kcat.csv')
-    test_km_df = pd.read_csv(f'./data/test_split/tabular/merge/seed/{args.seed}/test_km.csv')
-    test_eff_df = pd.read_csv(f'./data/test_split/tabular/merge/seed/{args.seed}/test_kcat_km.csv')
+    test_kcat_df = pd.read_csv(f'data/seed_0420/42/test_kcat.csv')
+    test_km_df = pd.read_csv(f'data/seed_0420/42/test_km.csv')
+    test_eff_df = pd.read_csv(f'data/seed_0420/42/test_kcat_km.csv')
 
     test_kcat_df = test_kcat_df.replace('-', np.nan)
     test_km_df = test_km_df.replace('-', np.nan)
@@ -97,7 +97,13 @@ def main(args):
     test_kcat_C = encoder.transform(test_kcat_C)
     test_km_C = encoder.transform(test_km_C)
     test_eff_C = encoder.transform(test_eff_C)
-        
+
+    max_values = train_C.max(axis=0)
+    for i in range(train_C.shape[1]):
+        test_kcat_C[test_kcat_C[:, i] == unknown_value, i] = max_values[i]
+        test_km_C[test_km_C[:, i] == unknown_value, i] = max_values[i]
+        test_eff_C[test_eff_C[:, i] == unknown_value, i] = max_values[i]
+
     args.categorical_features = get_categories(torch.tensor(train_C))
 
 
@@ -111,24 +117,24 @@ def main(args):
     test_km_df['MolLmdbKey'] = test_km_df['SMILES'].apply(lambda x: [smilestoi[i] for i in x.split('.')])
     test_eff_df['MolLmdbKey'] = test_eff_df['SMILES'].apply(lambda x: [smilestoi[i] for i in x.split('.')])
 
-    enzyme_lmdb_path = f'./data/ProtT5/protT5.lmdb'
+    enzyme_lmdb_path = f'./data/protT5/protT5.lmdb'
     args.enzyme_input_dim = 1024
     args.mol_lmdb = f'./data/Uni-Mol2/tabular_unimol_1.1B.lmdb'
 
     kcat_testset = TabularDataset_MultiTask(dataset_df=test_kcat_df, enzyme_lmdb=enzyme_lmdb_path,  
-                        mol_lmdb=args.mol_lmdb, structure_path='./data/AFDB/processed_proteins', 
+                        mol_lmdb=args.mol_lmdb, structure_path='./data/processed_proteins', 
                         mutate_pred=args.mutate_pred,  use_fingerprint=args.use_fingerprint, use_atom_feat=args.use_atom_feature,
                         protein_lmdbkey='LmdbKey', N=N['test_kcat'], C=test_kcat_C)
     kcat_test_loader = DataLoader(kcat_testset, batch_size=args.batch_size, num_workers=args.num_workers, collate_fn=tabular_collate_extract,)
     
     km_testset = TabularDataset_MultiTask(dataset_df=test_km_df, enzyme_lmdb=enzyme_lmdb_path,  
-                        mol_lmdb=args.mol_lmdb, structure_path='./data/AFDB/processed_proteins', 
+                        mol_lmdb=args.mol_lmdb, structure_path='./data/processed_proteins', 
                         mutate_pred=args.mutate_pred,  use_fingerprint=args.use_fingerprint, use_atom_feat=args.use_atom_feature,
                         protein_lmdbkey='LmdbKey', N=N['test_km'], C=test_km_C)
     km_test_loader = DataLoader(km_testset, batch_size=args.batch_size, num_workers=args.num_workers, collate_fn=tabular_collate_extract,)
     
     eff_testset = TabularDataset_MultiTask(dataset_df=test_eff_df, enzyme_lmdb=enzyme_lmdb_path,  
-                        mol_lmdb=args.mol_lmdb, structure_path='./data/AFDB/processed_proteins', 
+                        mol_lmdb=args.mol_lmdb, structure_path='./data/processed_proteins', 
                         mutate_pred=args.mutate_pred,  use_fingerprint=args.use_fingerprint, use_atom_feat=args.use_atom_feature,
                         protein_lmdbkey='LmdbKey', N=N['test_eff'], C=test_eff_C)
     eff_test_loader = DataLoader(eff_testset, batch_size=args.batch_size, num_workers=args.num_workers, collate_fn=tabular_collate_extract,)
@@ -310,7 +316,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--batch_size', default=128, type=int)
     parser.add_argument('--seed', default=42, type=int)
-    parser.add_argument('--ckpt', default='./ckpt/tabular_multitask_cross_val/42/aaa_save_weight_epoch50_dim_512_cons0.1_head4_lam1_0.3—33-no_aug-best/model.pth', help="train from checkpoint")
+    parser.add_argument('--ckpt', default='ckpt/model.pth', help="train from checkpoint")
 
     # Encoder setting
     parser.add_argument('--mutate_pred', action='store_true', default=True)

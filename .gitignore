@@ -9,6 +9,7 @@
 *.csv
 *.tsv
 *.zip
+model_cache/
 tmp/
 data/
 temp/
