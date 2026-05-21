@@ -2,7 +2,36 @@
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg) <br>
 Implementation of A Physics-Informed Deep Learning Engine for Predicting Enzyme Kinetics Under Heterogeneous Experimental Conditions<br>
 
-## 1. Directory Structure Requirements
+## Overview
+
+Tab-EZK is a physics-informed, structure-aware multi-task learning framework designed to predict enzyme kinetics (kcat, Km, kcat/Km) with unprecedented accuracy and robustness. Tab-EZK uniquely synergizes graph neural networks for 3D structural encoding with a Transformer-based Tabular Net that projects heterogeneous environmental metadata (e.g., pH, temperature) into a unified latent space, effectively capturing the non-linear modulation of catalytic activity.
+
+## Setup Environment
+
+### Clone the repository to your local machine
+
+```
+git clone https://github.com/YuanshengH/Tab-EZK.git
+```
+
+### Install the environment
+To set up the environment manually, run the following commands:
+```
+conda env create -f environment.yml
+conda activate tab_env_tab
+```
+
+Alternatively, you can download the pre-configured conda environment [here](https://drive.google.com/file/d/1lJmY1akkfrQGpb_ck-P8G0jzHjXcSFJZ/view?usp=sharing "download env"). After downloading, extract and load the environment with:
+```
+mkdir -p tab_ezk_env
+tar -xzf tab_ezk_env.tar.gz -C tab_ezk_env
+source tab_ezk_env/bin/activate
+```
+
+## Data Preparation
+Before reproducing the results, please download the model checkpoint and data. You can download tab-ezk_data.zip [here](https://drive.google.com/file/d/1o-i4cl2u5j6cL5RDbutAeoQTuZxpD6ND/view?usp=sharing "download"). 
+
+### Directory Structure Requirements
 
 Before running the scripts, make sure your data and pre-trained models are correctly placed in the workspace. Below is an overview of the expected directory structures:
 
@@ -15,19 +44,15 @@ data/
 ├── processed_proteins/          # Processed protein structures
 ├── protT5/                      # Extracted ProtT5 embeddings
 │   └── protT5.lmdb/             # Database (data.mdb, lock.mdb) containing embeddings
-├── seed_0420/                   # Data splits across different random seeds
-│   ├── 7/                       # CSV files: train.csv, valid.csv, test.csv, test_kcat_km.csv, etc.
+├── seed_split/                   # Data splits across different random seeds                      
 │   ├── 42/
-│   ├── 123/
-│   ├── 1234/
-│   └── 2026/
 └── Uni-Mol2/                    # Extracted Uni-Mol2 features and mappings
     ├── tabular_unimol_smile_dict.pk
     └── tabular_unimol_1.1B.lmdb/
 ```
 
 ### `model_cache/` Directory Layout
-The pre-trained model weights for **ProtT5** should be downloaded and manually placed here to allow local feature extraction.
+The pre-trained model weights for **ProtT5**(https://huggingface.co/Rostlab/prot_t5_xl_uniref50) should be downloaded and manually placed here to allow local feature extraction.
 ```text
 model_cache/
 └── protT5/                      # ProtT5 pre-trained weights
@@ -38,19 +63,13 @@ model_cache/
     └── README.md
 ```
 
-*(Note: Download links for the aforementioned datasets, pre-trained weights, and the whole `data/` packet: [Provide Link Here])*
-
-## 2. Data Preparation
-
-### Raw Data Setup
-Download the raw data (`df_merge_tabular.csv`) and the specific seed split files. Place everything according to the `data/` layout shown above.
-
 ### AlphaFold Structure Data
 Once you have the `df_merge_tabular.csv` file inside `data/`, you can automatically download the required AlphaFold structures by running:
 ```bash
 python af_down_data.py
 ```
 This script reads the protein identifiers from the CSV and downloads the corresponding PDB/CIF structures to `data/All_Structure/`.
+tab-ezk_data.zip include All_Structure, you can use them directly.
 
 ### ProtT5 Inference
 Make sure you have placed the ProtT5 weights inside `model_cache/protT5/`. You can then extract the protein sequence embeddings by running:
@@ -66,24 +85,12 @@ For molecular representations, you can directly download the pre-extracted featu
 python unimol_extract.py
 ```
 
-## 3. Environment Setup
-
-To speed up environment configuration, a pre-packaged environment is provided:
-* **Packaged Dependencies Download:** [Provide Link Here]
-
-*(It will include the required specific versions of PyTorch, geometric libraries, and science utilities like sklearn, loguru).*
-If you have a `requirements.txt` exported, you can recreate the environment using:
-```bash
-pip install -r requirements.txt
-```
-
-## 4. Run Testing & Evaluation
+## Run Testing & Evaluation
 
 Once all data and pretrained checkpoints are correctly placed, and your Python environment is fully active, you can test the model logic and evaluation execution using the `test.py` script:
 ```bash
 python test.py
 ```
-This script acts as an entry point, fetching from the multi-task tabular datasets, loading deep models via `KineticModel_Tabular_MultiTask`, and will output metric results such as MSE, R-squared(R2), Pearson, and Spearman coefficients.
 
 ---
 
