@@ -1,15 +1,6 @@
-# Primary reproducible runtime for Tab-EZK evaluation and shared preprocessing.
-# Target platform: Linux x86_64 with an NVIDIA GPU and a CUDA 12.1-capable driver.
-#
-# `unimol_extract.py` and `rosetta_mutate.py` are optional, isolated workflows:
-# current Uni-Mol Tools requires a newer PyTorch/NumPy stack, while PyRosetta is
-# distributed separately under its own license. Their generated data can be
-# consumed by this environment.
-
 name: tab-ezk
 
 channels:
-  - milagraph
   - pyg
   - pytorch
   - nvidia
@@ -17,12 +8,9 @@ channels:
   - nodefaults
 
 dependencies:
-  # TorchDrug 0.2.1 supports Python 3.7-3.10 only.
   - python=3.10
   - pip
-
-  # Keep PyTorch, CUDA, and compiled PyG extensions on one binary-compatible
-  # stack. The build pins intentionally make this file Linux/CUDA-specific.
+  - setuptools<81
   - pytorch=2.1.0
   - torchvision=0.16.0
   - pytorch-cuda=12.1
@@ -30,16 +18,14 @@ dependencies:
   - pyg=2.4.0=py310_torch_2.1.0_cu121
   - pytorch-scatter=2.1.2=py310_torch_2.1.0_cu121
   - pytorch-cluster=1.6.3=py310_torch_2.1.0_cu121
-  - torchdrug=0.2.1
-
-  # Direct imports used by test.py, tabular_dataset.py, utils.py, and the
-  # shared data-preparation scripts/notebook.
   - numpy=1.26
   - pandas=2.2
   - scipy=1.15
   - scikit-learn=1.6
-  - rdkit=2024.09
   - python-lmdb=1.6
+  - decorator=5.1
+  - matplotlib-base=3.10
+  - ninja=1.11
   - loguru=0.7
   - tqdm=4.67
   - pyyaml=6.0
@@ -47,5 +33,9 @@ dependencies:
   - sentencepiece=0.2
   - wandb=0.19
 
-  # af_down_data.py invokes the aria2c executable.
   - aria2=1.37
+
+  - pip:
+      - fair-esm==2.0.0
+      - rdkit-pypi==2022.9.5
+      - torchdrug==0.2.1

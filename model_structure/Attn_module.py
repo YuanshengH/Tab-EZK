@@ -3,7 +3,6 @@ import math
 import torch.nn.functional as F
 from torch import nn
 from typing import Tuple
-# from transformers.modeling_utils import Conv1D
 
 class GELU(nn.Module):
     def forward(self, x):

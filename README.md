@@ -29,9 +29,6 @@ The supported evaluation entry point is `test.py`.
 - An NVIDIA driver compatible with CUDA 12.1
 - Conda or Mamba
 
-The evaluation script currently selects CUDA device `0` and does not provide a
-CPU-only execution path.
-
 ## Installation
 
 ### 1. Clone the repository
@@ -62,14 +59,25 @@ python -c "import torch, torchdrug, torch_geometric; print(torch.__version__, to
 
 ## Data and Model Files
 
-For the fastest setup, use the provided precomputed data and model checkpoint:
+Download the base dataset and checkpoint together with the two feature
+resources that are available as precomputed archives:
 
 - [Download the Tab-EZK data and checkpoint bundle](https://drive.google.com/file/d/1o-i4cl2u5j6cL5RDbutAeoQTuZxpD6ND/view?usp=sharing)
-- [Download the precomputed AlphaFold structures](https://drive.google.com/file/d/1eSdL2tk5kX26Ls0XGVN_5Qk5_NpMiCxP/view?usp=drive_link)
+- [Download the precomputed protein structure archive](https://drive.google.com/file/d/1eSdL2tk5kX26Ls0XGVN_5Qk5_NpMiCxP/view?usp=drive_link)
 - [Download the precomputed Uni-Mol2 representations](https://drive.google.com/file/d/1qMMzYWCXgrQHwGtotqDa7ON1Imv-4x2K/view?usp=drive_link)
 
-Extract the required files under the repository root. The evaluation code
-expects the following layout:
+Only the raw protein structures and Uni-Mol2 representations are provided as
+precomputed feature downloads. The processed protein graphs and ProtT5
+representations must be generated locally before evaluation by following the
+required steps under [Rebuilding Features](#rebuilding-features).
+
+The precomputed structure archive contains both the downloaded AlphaFold2
+reference structures and the PyRosetta-generated structures for point-mutant
+proteins in the dataset. When using this archive, you do not need to run
+`af_download.py` or `rosetta_mutate.py`.
+
+Extract the downloaded files under the repository root. During feature
+preparation and evaluation, the relevant files use the following layout:
 
 ```text
 Tab-EZK/
@@ -77,7 +85,9 @@ Tab-EZK/
 │   └── model.pth
 └── data/
     ├── df_merge_tabular.csv
-    ├── seed_0420/
+    ├── All_Structure/
+    │   └── *.pdb
+    ├── seed_split/
     │   └── 42/
     │       ├── test_kcat.csv
     │       ├── test_km.csv
@@ -95,43 +105,79 @@ Tab-EZK/
             └── lock.mdb
 ```
 
-`data/All_Structure/` and `model_cache/protT5/` are needed only when rebuilding
-the processed features from source.
+`data/All_Structure/` contains the raw reference and mutant PDB files and is
+needed only when rebuilding the processed protein graphs.
 
-## Rebuilding Features (Optional)
+## Rebuilding Features
 
-The precomputed files are recommended for reproducing the reported evaluation.
-The following steps are required only if you want to regenerate individual
-feature sets.
+Feature preparation combines downloadable resources with two mandatory local
+processing steps:
 
-### AlphaFold structures
+| Feature | Precomputed download | Required action |
+| --- | --- | --- |
+| Raw protein structures | Available | Download the structure archive, or regenerate it with AlphaFold2 and PyRosetta |
+| Processed protein graphs | Not available | Run all cells in `data_process.ipynb` |
+| ProtT5 representations | Not available | Run `protT5_extract.py` |
+| Uni-Mol2 representations | Available | Download the Uni-Mol2 archive, or regenerate it with `unimol_extract.py` |
 
-You can use the
+The processed protein graphs and ProtT5 representations are required even when
+the two precomputed archives are used.
+
+### Protein structures (download or regenerate)
+
+The dataset contains both wild-type proteins and proteins with one or more
+point mutations. The structures downloaded from AlphaFold2 correspond to the
+UniProt reference sequence and are not mutation-specific. Therefore, rebuilding
+the complete structure set requires two stages: downloading the reference
+structures and then generating the mutant structures with PyRosetta.
+
+The simplest option is to use the
 [precomputed structure archive](https://drive.google.com/file/d/1eSdL2tk5kX26Ls0XGVN_5Qk5_NpMiCxP/view?usp=drive_link)
-or run:
+described above. It already includes the generated mutant structures.
+
+To rebuild the structures from source, first create the output directory and
+download the AlphaFold2 reference structures:
 
 ```bash
-python af_down_data.py
+mkdir -p data/All_Structure
+python af_download.py
 ```
 
-The current downloader uses legacy hard-coded paths: it reads
-`data/test_split/tabular/merge/df_merge_tabular.csv`, writes PDB files to
-`data/AFDB/All_Structure/`, and writes its log under
-`data/AFDB/AF_structure/`. Create these directories before running the script.
-To use the downloaded files with `data_process.ipynb`, move or link them into
-`data/All_Structure/`.
+`af_download.py` reads UniProt identifiers from `data/df_merge_tabular.csv` and
+writes the downloaded PDB files to `data/All_Structure/`.
 
-### Process protein structures
+Next, install PyRosetta in a separate environment and run:
 
-`data_process.ipynb` converts the PDB files in `data/All_Structure/` into
-pickled TorchDrug protein graphs under `data/processed_proteins/`. Ensure that
-both directories exist before running the notebook.
+```bash
+python rosetta_mutate.py
+```
 
-Jupyter is not part of the core evaluation environment. If needed, install a
-Jupyter frontend separately and run the notebook with the `tab-ezk` environment
-as its kernel.
+`rosetta_mutate.py` reads the `UniprotID` and `Mutation` fields from
+`data/df_merge_tabular.csv`, introduces the specified amino-acid substitutions
+into the corresponding AlphaFold2 reference structure, performs structural
+relaxation, and saves the resulting mutant PDB files in
+`data/All_Structure/`. PyRosetta is distributed separately under the Rosetta
+software license and is intentionally not included in `environment.yml`.
 
-### ProtT5 representations
+### Process protein structures (required)
+
+After both the reference and mutant PDB files are available,
+`data_process.ipynb` converts the structures in `data/All_Structure/` into
+pickled TorchDrug protein graphs under `data/processed_proteins/`. This step is
+mandatory; the structure archive contains PDB files rather than the processed
+TorchDrug graphs.
+
+Create the output directory, open `data_process.ipynb` with the `tab-ezk`
+environment as its kernel, and run all cells from top to bottom:
+
+```bash
+mkdir -p data/processed_proteins
+```
+
+After the notebook finishes, confirm that the generated `.pkl` files are
+present under `data/processed_proteins/`.
+
+### ProtT5 representations (required)
 
 Download the
 [ProtT5-XL-UniRef50 model](https://huggingface.co/Rostlab/prot_t5_xl_uniref50)
@@ -147,16 +193,18 @@ model_cache/
     └── model weight file(s), such as pytorch_model.bin or model.safetensors
 ```
 
-Then run:
+No precomputed ProtT5 representation archive is provided. Create the output
+directory and run the extraction script:
 
 ```bash
+mkdir -p data/protT5
 python protT5_extract.py
 ```
 
 The script writes residue-level representations to
 `data/protT5/protT5.lmdb/`.
 
-### Uni-Mol2 representations
+### Uni-Mol2 representations (download or regenerate)
 
 The recommended approach is to use the
 [precomputed Uni-Mol2 archive](https://drive.google.com/file/d/1qMMzYWCXgrQHwGtotqDa7ON1Imv-4x2K/view?usp=drive_link).
@@ -171,13 +219,6 @@ python unimol_extract.py
 
 `unimol_tools` is intentionally excluded from the main environment because its
 current dependency stack requires newer PyTorch and NumPy versions. 
-
-### PyRosetta mutation workflow
-
-`rosetta_mutate.py` is an optional structure-mutation workflow. PyRosetta is
-distributed separately under the Rosetta software license and should be
-installed in a dedicated environment rather than added to the main Tab-EZK
-environment.
 
 ## Evaluation
 
@@ -199,4 +240,3 @@ python test.py --ckpt ckpt/model.pth --batch_size 16 --num_workers 4
 The script evaluates $k_{\mathrm{cat}}$, $K_{\mathrm{m}}$, and
 $k_{\mathrm{cat}}/K_{\mathrm{m}}$, and reports RMSE, MAE, $R^2$, and Pearson
 correlation.
-

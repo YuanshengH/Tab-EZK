@@ -3,13 +3,7 @@ import torch
 import sys
 from torch import nn
 from torchdrug import core, layers
-
-
-sys.path.append('/home/yuanshenghuang/Kcat/model_structure')
 from torchdrug.models.gearnet import GeometryAwareRelationalGraphNeuralNetwork as GearNet
-# from gvp import GVPGNN
-# from cdconv import ContinuousDiscreteConvolutionalNetwork as CDConvNet
-# from model_structure.s3f_module.gvp import SurfGVP
 
 class EnzymeFusionNetwork(nn.Module, core.Configurable):
     def __init__(self, input_dim, hidden_dims=[512, 512, 512], use_graph_construction_model=True, structure_model='gearnet'):

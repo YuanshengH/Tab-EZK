@@ -1,10 +1,10 @@
 import argparse
 import os
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 import sys
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 import sklearn
+import torchvision
 import torch
 import pickle
 import pandas as pd
@@ -46,9 +46,9 @@ def main(args):
     df = df.replace('-', np.nan)
 
     train_df, _ = train_test_split(df, train_size=0.8, random_state=args.seed)
-    test_kcat_df = pd.read_csv(f'data/seed_0420/42/test_kcat.csv')
-    test_km_df = pd.read_csv(f'data/seed_0420/42/test_km.csv')
-    test_eff_df = pd.read_csv(f'data/seed_0420/42/test_kcat_km.csv')
+    test_kcat_df = pd.read_csv(f'data/seed_split/42/test_kcat.csv')
+    test_km_df = pd.read_csv(f'data/seed_split/42/test_km.csv')
+    test_eff_df = pd.read_csv(f'data/seed_split/42/test_kcat_km.csv')
 
     test_kcat_df = test_kcat_df.replace('-', np.nan)
     test_km_df = test_km_df.replace('-', np.nan)
