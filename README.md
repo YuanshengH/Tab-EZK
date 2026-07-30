@@ -61,7 +61,7 @@ python -c "import torch, torchdrug, torch_geometric; print(torch.__version__, to
 Download the base dataset and checkpoint together with the two feature
 resources that are available as precomputed archives:
 
-- [Download the Tab-EZK data and checkpoint bundle](https://drive.google.com/file/d/1o-i4cl2u5j6cL5RDbutAeoQTuZxpD6ND/view?usp=sharing)
+- [Download the Tab-EZK data and checkpoint bundle](https://drive.google.com/file/d/1-3whB6ivC85TJ-KK-C4nVt9W2rNq_lNn/view?usp=sharing)
 - [Download the precomputed protein structure archive](https://drive.google.com/file/d/1eSdL2tk5kX26Ls0XGVN_5Qk5_NpMiCxP/view?usp=drive_link)
 - [Download the precomputed Uni-Mol2 representations](https://drive.google.com/file/d/1qMMzYWCXgrQHwGtotqDa7ON1Imv-4x2K/view?usp=drive_link)
 
