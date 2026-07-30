@@ -1,6 +1,5 @@
 # Tab-EZK: A Physics-Informed Deep Learning Engine for Enzyme Kinetics
 
-![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
 This repository provides the implementation of **A Physics-Informed Deep
 Learning Engine for Predicting Enzyme Kinetics Under Heterogeneous
